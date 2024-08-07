@@ -1,7 +1,9 @@
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
-
+from django.core import validators
 
 class Airport(models.Model):
     name = models.CharField(max_length=255)
@@ -25,7 +27,9 @@ class Route(models.Model):
         on_delete=models.CASCADE,
         related_name="routes"
     )
-    distance = models.IntegerField()
+    distance = models.IntegerField(
+        validators=validators.MinValueValidator(0)
+    )
 
     def __str__(self):
         return f"{self.source}-{self.destination}"
@@ -61,8 +65,12 @@ class AirplaneType(models.Model):
 
 class Airplane(models.Model):
     name = models.CharField(max_length=255)
-    rows = models.IntegerField()
-    seats_in_row = models.IntegerField()
+    rows = models.IntegerField(
+        validators=validators.MinValueValidator(0)
+    )
+    seats_in_row = models.IntegerField(
+        validators=validators.MinValueValidator(0)
+    )
     airplane_type = models.ForeignKey(
         AirplaneType,
         on_delete=models.CASCADE,
@@ -86,6 +94,30 @@ class Flight(models.Model):
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
     crew = models.ManyToManyField(Crew, related_name="flights")
+
+    @staticmethod
+    def validate_departure_and_arrival_time(
+            arrival_time: datetime,
+            departure_time: datetime,
+            error_to_raise
+    ):
+        if arrival_time > departure_time:
+            raise error_to_raise({
+                "departure_time":
+                    f"departure time must be after arrival time"
+            })
+
+    def clean(self) -> None:
+        super().clean()
+        self.validate_departure_and_arrival_time(
+            self.arrival_time,
+            self.departure_time,
+            ValidationError
+        )
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.airplane} {self.route}"
