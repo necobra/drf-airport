@@ -28,7 +28,7 @@ class Route(models.Model):
         related_name="routes"
     )
     distance = models.IntegerField(
-        validators=validators.MinValueValidator(0)
+        validators=[validators.MinValueValidator(0)]
     )
 
     def __str__(self):
@@ -66,10 +66,10 @@ class AirplaneType(models.Model):
 class Airplane(models.Model):
     name = models.CharField(max_length=255)
     rows = models.IntegerField(
-        validators=validators.MinValueValidator(0)
+        validators=[validators.MinValueValidator(0)]
     )
     seats_in_row = models.IntegerField(
-        validators=validators.MinValueValidator(0)
+        validators=[validators.MinValueValidator(0)]
     )
     airplane_type = models.ForeignKey(
         AirplaneType,
