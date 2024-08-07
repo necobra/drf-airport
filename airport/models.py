@@ -20,12 +20,12 @@ class Route(models.Model):
     source = models.ForeignKey(
         Airport,
         on_delete=models.CASCADE,
-        related_name="routes"
+        related_name="sourse_routes"
     )
     destination = models.ForeignKey(
         Airport,
         on_delete=models.CASCADE,
-        related_name="routes"
+        related_name="destination_routes"
     )
     distance = models.IntegerField(
         validators=[validators.MinValueValidator(0)]
@@ -50,7 +50,8 @@ class Crew(models.Model):
         return self.full_name
 
     class Meta:
-        ordering = ["full_name"]
+        ordering = ["first_name", "last_name"]
+        verbose_name_plural = "crew"
 
 
 class AirplaneType(models.Model):
@@ -178,7 +179,7 @@ class Ticket(models.Model):
         )
 
     class Meta:
-        unique_together = ("movie_session", "row", "seat")
+        unique_together = ("flight", "row", "seat")
         ordering = ["row", "seat"]
 
 
