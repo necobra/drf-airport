@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.core import validators
 
+
 class Airport(models.Model):
     name = models.CharField(max_length=255)
     closest_big_city = models.CharField(max_length=255)
@@ -18,18 +19,12 @@ class Airport(models.Model):
 
 class Route(models.Model):
     source = models.ForeignKey(
-        Airport,
-        on_delete=models.CASCADE,
-        related_name="sourse_routes"
+        Airport, on_delete=models.CASCADE, related_name="sourse_routes"
     )
     destination = models.ForeignKey(
-        Airport,
-        on_delete=models.CASCADE,
-        related_name="destination_routes"
+        Airport, on_delete=models.CASCADE, related_name="destination_routes"
     )
-    distance = models.IntegerField(
-        validators=[validators.MinValueValidator(0)]
-    )
+    distance = models.IntegerField(validators=[validators.MinValueValidator(0)])
 
     def __str__(self):
         return f"{self.source}-{self.destination}"
@@ -66,16 +61,10 @@ class AirplaneType(models.Model):
 
 class Airplane(models.Model):
     name = models.CharField(max_length=255)
-    rows = models.IntegerField(
-        validators=[validators.MinValueValidator(0)]
-    )
-    seats_in_row = models.IntegerField(
-        validators=[validators.MinValueValidator(0)]
-    )
+    rows = models.IntegerField(validators=[validators.MinValueValidator(0)])
+    seats_in_row = models.IntegerField(validators=[validators.MinValueValidator(0)])
     airplane_type = models.ForeignKey(
-        AirplaneType,
-        on_delete=models.CASCADE,
-        related_name="airplanes"
+        AirplaneType, on_delete=models.CASCADE, related_name="airplanes"
     )
 
     @property
@@ -98,22 +87,17 @@ class Flight(models.Model):
 
     @staticmethod
     def validate_departure_and_arrival_time(
-            arrival_time: datetime,
-            departure_time: datetime,
-            error_to_raise
+        arrival_time: datetime, departure_time: datetime, error_to_raise
     ):
         if arrival_time > departure_time:
-            raise error_to_raise({
-                "departure_time":
-                    f"departure time must be after arrival time"
-            })
+            raise error_to_raise(
+                {"departure_time": f"departure time must be after arrival time"}
+            )
 
     def clean(self) -> None:
         super().clean()
         self.validate_departure_and_arrival_time(
-            self.arrival_time,
-            self.departure_time,
-            ValidationError
+            self.arrival_time, self.departure_time, ValidationError
         )
 
     def save(self, *args, **kwargs) -> None:
@@ -130,11 +114,7 @@ class Flight(models.Model):
 class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
-    flight = models.ForeignKey(
-        Flight,
-        on_delete=models.CASCADE,
-        related_name="tickets"
-    )
+    flight = models.ForeignKey(Flight, on_delete=models.CASCADE, related_name="tickets")
 
     @staticmethod
     def validate_ticket(row, seat, cinema_hall, error_to_raise):
@@ -147,9 +127,9 @@ class Ticket(models.Model):
                 raise error_to_raise(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
-                                          f"number must be in available range: "
-                                          f"(1, {cinema_hall_attr_name}): "
-                                          f"(1, {count_attrs})"
+                        f"number must be in available range: "
+                        f"(1, {cinema_hall_attr_name}): "
+                        f"(1, {count_attrs})"
                     }
                 )
 
@@ -162,11 +142,11 @@ class Ticket(models.Model):
         )
 
     def save(
-            self,
-            force_insert=False,
-            force_update=False,
-            using=None,
-            update_fields=None,
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
     ):
         self.full_clean()
         return super(Ticket, self).save(
@@ -174,9 +154,7 @@ class Ticket(models.Model):
         )
 
     def __str__(self):
-        return (
-            f"{str(self.flight)} (row: {self.row}, seat: {self.seat})"
-        )
+        return f"{str(self.flight)} (row: {self.row}, seat: {self.seat})"
 
     class Meta:
         unique_together = ("flight", "row", "seat")
@@ -186,9 +164,7 @@ class Ticket(models.Model):
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
-        get_user_model(),
-        on_delete=models.CASCADE,
-        related_name="orders"
+        get_user_model(), on_delete=models.CASCADE, related_name="orders"
     )
 
     def __str__(self):
