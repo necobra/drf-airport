@@ -17,11 +17,31 @@ class RouteViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.RouteSerializer
     search_fields = ["source", "destination"]
 
+    def get_serializer_class(self):
+        if self.action == "list":
+            return serializers.RouteListSerializer
+        if self.action == "retrieve":
+            return serializers.RouteDetailSerializer
+        return self.serializer_class
+
 
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = models.Crew.objects.all()
     serializer_class = serializers.CrewSerializer
     search_fields = ["first_name", "last_name"]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return serializers.CrewListSerializer
+        if self.action == "retrieve":
+            return serializers.CrewDetailSerializer
+        return self.serializer_class
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related("flights")
+        return queryset
 
 
 class AirplaneTypeViewSet(viewsets.ModelViewSet):
@@ -47,6 +67,13 @@ class FlightViewSet(viewsets.ModelViewSet):
     filterset_class = custom_filters.FlightFilter
     search_fields = ["airplane", "route"]
     ordering_fields = ["route", "departure_time", "arrival_time"]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return serializers.FlightListSerializer
+        if self.action == "retrieve":
+            return serializers.FlightDetailSerializer
+        return self.serializer_class
 
 
 class TicketViewSet(viewsets.ModelViewSet):
