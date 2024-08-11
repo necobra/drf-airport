@@ -1,6 +1,7 @@
 from django.db.models import F, Count
 from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
 from airport import models, serializers
@@ -79,9 +80,7 @@ class AirplaneViewSet(
 
 class FlightViewSet(viewsets.ModelViewSet):
     queryset = (
-        models.Flight.objects.select_related(
-            "airplane", "route", "route__source", "route__destination"
-        )
+        models.Flight.objects.select_related("airplane", "route")
         .prefetch_related("crew")
         .annotate(
             tickets_available=(
@@ -112,10 +111,9 @@ class OrderViewSet(
     mixins.CreateModelMixin,
     GenericViewSet,
 ):
-    queryset = models.Order.objects.prefetch_related(
-        "tickets__movie_session__movie", "tickets__movie_session__cinema_hall"
-    )
+    queryset = models.Order.objects.prefetch_related("tickets__flight")
     serializer_class = serializers.OrderSerializer
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return models.Order.objects.filter(user=self.request.user)
