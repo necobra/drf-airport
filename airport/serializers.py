@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework import exceptions
 
 from airport import models
 
@@ -76,7 +77,12 @@ class FlightListSerializer(FlightSerializer):
 class TicketSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         data = super(TicketSerializer, self).validate(attrs=attrs)
-        models.Ticket.validate_ticket(attrs["row"], attrs["seat"], attrs["flight"])
+        models.Ticket.validate_ticket(
+            attrs["row"],
+            attrs["seat"],
+            attrs["flight"].airplane,
+            exceptions.ValidationError,
+        )
         return data
 
     class Meta:
