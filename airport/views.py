@@ -1,6 +1,8 @@
+from django.db.models import F, Count
 from django.shortcuts import render
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.viewsets import GenericViewSet
 
 from airport import models, serializers
 from airport import filters as custom_filters
@@ -13,7 +15,7 @@ class AirportViewSet(viewsets.ModelViewSet):
 
 
 class RouteViewSet(viewsets.ModelViewSet):
-    queryset = models.Route.objects.all()
+    queryset = models.Route.objects.select_related("source", "destination")
     serializer_class = serializers.RouteSerializer
     search_fields = ["source", "destination"]
 
@@ -51,13 +53,23 @@ class AirplaneTypeViewSet(viewsets.ModelViewSet):
 
 
 class AirplaneViewSet(viewsets.ModelViewSet):
-    queryset = models.Airplane.objects.all()
+    queryset = models.Airplane.objects.select_related("airplane_type")
     serializer_class = serializers.AirplaneSerializer
     search_fields = ["name"]
 
 
 class FlightViewSet(viewsets.ModelViewSet):
-    queryset = models.Flight.objects.all()
+    queryset = (
+        models.Flight.objects.select_related(
+            "airplane", "route", "route__source", "route__destination"
+        )
+        .prefetch_related("crew")
+        .annotate(
+            tickets_available=(
+                F("airplane__rows") * F("airplane__seats_in_row") - Count("tickets")
+            )
+        )
+    )
     serializer_class = serializers.FlightSerializer
     filter_backends = [
         filters.OrderingFilter,
@@ -77,10 +89,28 @@ class FlightViewSet(viewsets.ModelViewSet):
 
 
 class TicketViewSet(viewsets.ModelViewSet):
-    queryset = models.Ticket.objects.all()
+    queryset = models.Ticket.objects.select_related("flight")
     serializer_class = serializers.TicketSerializer
 
 
-class OrderViewSet(viewsets.ModelViewSet):
-    queryset = models.Order.objects.all()
+class OrderViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    GenericViewSet,
+):
+    queryset = models.Order.objects.prefetch_related(
+        "tickets__movie_session__movie", "tickets__movie_session__cinema_hall"
+    )
     serializer_class = serializers.OrderSerializer
+
+    def get_queryset(self):
+        return models.Order.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return serializers.OrderListSerializer
+
+        return serializers.OrderSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
