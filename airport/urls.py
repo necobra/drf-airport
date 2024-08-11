@@ -10,7 +10,6 @@ router.register("airplane_types", views.AirplaneTypeViewSet)
 router.register("airplanes", views.AirplaneViewSet)
 router.register("airports", views.AirportViewSet)
 router.register("flights", views.FlightViewSet)
-router.register("tickets", views.TicketViewSet)
 router.register("routes", views.RouteViewSet)
 
 
