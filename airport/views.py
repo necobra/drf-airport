@@ -1,5 +1,4 @@
 from django.db.models import F, Count
-from django.shortcuts import render
 from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import GenericViewSet
@@ -8,13 +7,21 @@ from airport import models, serializers
 from airport import filters as custom_filters
 
 
-class AirportViewSet(viewsets.ModelViewSet):
+class AirportViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     queryset = models.Airport.objects.all()
     serializer_class = serializers.AirportSerializer
     search_fields = ["name", "closest_big_city"]
 
 
-class RouteViewSet(viewsets.ModelViewSet):
+class RouteViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     queryset = models.Route.objects.select_related("source", "destination")
     serializer_class = serializers.RouteSerializer
     search_fields = ["source", "destination"]
@@ -27,7 +34,11 @@ class RouteViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
 
-class CrewViewSet(viewsets.ModelViewSet):
+class CrewViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     queryset = models.Crew.objects.all()
     serializer_class = serializers.CrewSerializer
     search_fields = ["first_name", "last_name"]
@@ -46,13 +57,21 @@ class CrewViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class AirplaneTypeViewSet(viewsets.ModelViewSet):
+class AirplaneTypeViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     queryset = models.AirplaneType.objects.all()
     serializer_class = serializers.AirplaneTypeSerializer
     search_fields = ["name"]
 
 
-class AirplaneViewSet(viewsets.ModelViewSet):
+class AirplaneViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     queryset = models.Airplane.objects.select_related("airplane_type")
     serializer_class = serializers.AirplaneSerializer
     search_fields = ["name"]
@@ -86,11 +105,6 @@ class FlightViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return serializers.FlightDetailSerializer
         return self.serializer_class
-
-
-class TicketViewSet(viewsets.ModelViewSet):
-    queryset = models.Ticket.objects.select_related("flight")
-    serializer_class = serializers.TicketSerializer
 
 
 class OrderViewSet(
