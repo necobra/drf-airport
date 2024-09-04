@@ -53,7 +53,7 @@ class CrewViewSet(
 
     def get_queryset(self):
         queryset = self.queryset
-        if self.action == "retrieve":
+        if self.action in ("retrieve", "list"):
             queryset = queryset.prefetch_related("flights")
         return queryset
 
