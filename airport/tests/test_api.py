@@ -65,21 +65,25 @@ def sample_flight(route=None, airplane=None, **params):
     return Flight.objects.create(**defaults)
 
 
-class AirportViewSetTests(TestCase):
-    def setUp(self):
+class BaseTestData(TestCase):
+    def setUpTestData(self):
         self.client = APIClient()
-        self.user = get_user_model().objects.create_superuser(
-            "admin@myproject.com", "password"
+        self.superuser = get_user_model().objects.create_superuser(
+            "superuser@myproject.com", "password"
         )
-        self.client.force_authenticate(self.user)
+        self.user = get_user_model().objects.create_user(
+            "user@myproject.com", "password"
+        )
+        self.client.force_authenticate(self.superuser)
 
+
+class AirportViewSetTests(BaseTestData):
     def test_list_airports(self):
         sample_airport()
         sample_airport(name="Another Airport")
         res = self.client.get(AIRPORT_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-
         self.assertEqual(len(res.data["results"]), 2)
 
     def test_create_airport(self):
@@ -91,14 +95,7 @@ class AirportViewSetTests(TestCase):
         self.assertEqual(Airport.objects.get().name, "New Airport")
 
 
-class RouteViewSetTests(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = get_user_model().objects.create_superuser(
-            "admin@myproject.com", "password"
-        )
-        self.client.force_authenticate(self.user)
-
+class RouteViewSetTests(BaseTestData):
     def test_list_routes(self):
         route = sample_route()
         res = self.client.get(ROUTE_URL)
@@ -118,14 +115,7 @@ class RouteViewSetTests(TestCase):
         self.assertEqual(Route.objects.get().distance, 500)
 
 
-class FlightViewSetTests(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = get_user_model().objects.create_superuser(
-            "admin@myproject.com", "password"
-        )
-        self.client.force_authenticate(self.user)
-
+class FlightViewSetTests(BaseTestData):
     def test_list_flights(self):
         flight = sample_flight()
         res = self.client.get(FLIGHT_URL)
@@ -150,13 +140,10 @@ class FlightViewSetTests(TestCase):
         self.assertEqual(Flight.objects.get().route, route)
 
 
-class OrderViewSetTests(TestCase):
+class OrderViewSetTests(BaseTestData):
     def setUp(self):
-        self.client = APIClient()
-        self.user = get_user_model().objects.create_user(
-            "admin@myproject.com", "password"
-        )
-        self.client.force_authenticate(self.user)
+        super().setUp()
+        self.client.force_authenticate(self.user)  # Switch to regular user
 
     def test_list_orders(self):
         order = Order.objects.create(user=self.user)
